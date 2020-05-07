@@ -101,5 +101,4 @@ if err != nil {
     // handle error
 }
 err := json.Marshal(w, o) // {"bar",:"bar","sub_resource":{"foo":"foo"}}
-
 ```

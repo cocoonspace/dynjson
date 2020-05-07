@@ -61,9 +61,31 @@ func (f *Formatter) RegisterEmbed(name string, idfield string, e Embedder, i int
 	return f.addStruct(t, name+".")
 }
 
+// Format formats either an object or a slice, returning only the selected fields (or all if none specified), including the selected embeds.
+func (f *Formatter) Format(o interface{}, fields []string, embeds []string) (interface{}, error) {
+	if len(fields) == 0 && len(embeds) == 0 {
+		return o, nil
+	}
+	k := reflect.Indirect(reflect.ValueOf(o)).Kind()
+	switch k {
+	case reflect.Struct:
+		return f.FormatObject(o, fields, embeds)
+	case reflect.Slice:
+		return f.FormatList(o, fields, embeds)
+	default:
+		return nil, fmt.Errorf("unsupported type %v", k)
+	}
+}
+
 // FormatObject formats an object, returning only the selected fields (or all if none specified), including the selected embeds.
 func (f *Formatter) FormatObject(o interface{}, fields []string, embeds []string) (interface{}, error) {
+	if len(fields) == 0 && len(embeds) == 0 {
+		return o, nil
+	}
 	src := reflect.Indirect(reflect.ValueOf(o))
+	if src.Kind() != reflect.Struct {
+		return nil, errors.New("input is not a struct")
+	}
 	ff, err := f.getFormat(src.Type(), fields, embeds)
 	if err != nil {
 		return nil, err
@@ -77,6 +99,9 @@ func (f *Formatter) FormatObject(o interface{}, fields []string, embeds []string
 
 // FormatList formats a slice.
 func (f *Formatter) FormatList(o interface{}, fields []string, embeds []string) (interface{}, error) {
+	if len(fields) == 0 && len(embeds) == 0 {
+		return o, nil
+	}
 	src := reflect.Indirect(reflect.ValueOf(o))
 	if src.Kind() != reflect.Slice {
 		return nil, errors.New("input is not a slice")
@@ -99,8 +124,9 @@ func (f *Formatter) FormatList(o interface{}, fields []string, embeds []string) 
 func (f *Formatter) doFormatObject(src reflect.Value, ff format, fields []string, embeds []string) (reflect.Value, error) {
 	pdst := reflect.New(ff.t)
 	dst := pdst.Elem()
-	embedded := map[string]reflect.Value{}
+	var embedded map[string]reflect.Value
 	if len(embeds) > 0 {
+		embedded = map[string]reflect.Value{}
 		var ids []string
 		for _, e := range embeds {
 			ids = append(ids, f.embeds[e].idfield)

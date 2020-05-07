@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 )
 
-func TestFormatter(t *testing.T) {
+func TestFormatter_FormatObject(t *testing.T) {
 	var tests = []struct {
 		src    interface{}
 		format string
@@ -246,7 +247,7 @@ func testEmbedder(id interface{}) (interface{}, error) {
 	}
 }
 
-func TestEmbed(t *testing.T) {
+func TestFormatter_Embed(t *testing.T) {
 	f := NewFormatter()
 	err := f.RegisterEmbed("embed", "foo", testEmbedder, &testEmbed{})
 	if err != nil {
@@ -316,7 +317,7 @@ func TestEmbed(t *testing.T) {
 	}
 }
 
-func TestList(t *testing.T) {
+func TestFormatter_FormatList(t *testing.T) {
 	f := NewFormatter()
 	err := f.RegisterEmbed("embed", "foo", testEmbedder, &testEmbed{})
 	if err != nil {
@@ -379,5 +380,30 @@ func TestList(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func BenchmarkFormatter_FormatObject_Fields(b *testing.B) {
+	f := NewFormatter()
+	w := json.NewEncoder(ioutil.Discard)
+	for i := 0; i < b.N; i++ {
+		o, _ := f.FormatObject(testStruct{Foo: i, Bar: "bar"}, []string{"foo", "bar"}, nil)
+		w.Encode(o)
+	}
+}
+
+func BenchmarkFormatter_FormatObject_NoFields(b *testing.B) {
+	f := NewFormatter()
+	w := json.NewEncoder(ioutil.Discard)
+	for i := 0; i < b.N; i++ {
+		o, _ := f.FormatObject(testStruct{Foo: i, Bar: "bar"}, nil, nil)
+		w.Encode(o)
+	}
+}
+
+func BenchmarkRawJSON(b *testing.B) {
+	w := json.NewEncoder(ioutil.Discard)
+	for i := 0; i < b.N; i++ {
+		w.Encode(testStruct{Foo: i, Bar: "bar"})
 	}
 }
