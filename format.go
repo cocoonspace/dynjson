@@ -9,20 +9,13 @@ import (
 )
 
 type mapping struct {
-	src   reflect.StructField
-	dst   reflect.StructField
-	embed string
+	src reflect.StructField
+	dst reflect.StructField
 }
 
 type format struct {
 	t      reflect.Type
 	fields map[string]mapping
-}
-
-type embed struct {
-	idfield  string
-	embedder Embedder
-	t        reflect.Type
 }
 
 // Formatter is a dynamic API format formatter.
@@ -31,7 +24,6 @@ type Formatter struct {
 	fieldnames map[reflect.Type][]string
 	fields     map[reflect.Type]map[string]reflect.StructField
 	formats    map[reflect.Type]map[string]format
-	embeds     map[string]embed
 }
 
 // NewFormatter creates a new formatter.
@@ -40,57 +32,39 @@ func NewFormatter() *Formatter {
 		fieldnames: map[reflect.Type][]string{},
 		fields:     map[reflect.Type]map[string]reflect.StructField{},
 		formats:    map[reflect.Type]map[string]format{},
-		embeds:     map[string]embed{},
 	}
 }
 
-// Embedder is the func that returns an embedded sub-resource using its id.
-type Embedder func(id interface{}) (interface{}, error)
-
-// RegisterEmbed register an embed.
-func (f *Formatter) RegisterEmbed(name string, idfield string, e Embedder, i interface{}) error {
-	t := reflect.TypeOf(i)
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-	f.embeds[name] = embed{
-		idfield:  idfield,
-		embedder: e,
-		t:        t,
-	}
-	return f.addStruct(t, name+".")
-}
-
-// Format formats either an object or a slice, returning only the selected fields (or all if none specified), including the selected embeds.
-func (f *Formatter) Format(o interface{}, fields []string, embeds []string) (interface{}, error) {
-	if len(fields) == 0 && len(embeds) == 0 {
+// Format formats either an object or a slice, returning only the selected fields (or all if none specified).
+func (f *Formatter) Format(o interface{}, fields []string) (interface{}, error) {
+	if len(fields) == 0 {
 		return o, nil
 	}
 	k := reflect.Indirect(reflect.ValueOf(o)).Kind()
 	switch k {
 	case reflect.Struct:
-		return f.FormatObject(o, fields, embeds)
+		return f.FormatObject(o, fields)
 	case reflect.Slice:
-		return f.FormatList(o, fields, embeds)
+		return f.FormatList(o, fields)
 	default:
 		return nil, fmt.Errorf("unsupported type %v", k)
 	}
 }
 
-// FormatObject formats an object, returning only the selected fields (or all if none specified), including the selected embeds.
-func (f *Formatter) FormatObject(o interface{}, fields []string, embeds []string) (interface{}, error) {
-	if len(fields) == 0 && len(embeds) == 0 {
+// FormatObject formats an object, returning only the selected fields (or all if none specified).
+func (f *Formatter) FormatObject(o interface{}, fields []string) (interface{}, error) {
+	if len(fields) == 0 {
 		return o, nil
 	}
 	src := reflect.Indirect(reflect.ValueOf(o))
 	if src.Kind() != reflect.Struct {
 		return nil, errors.New("input is not a struct")
 	}
-	ff, err := f.getFormat(src.Type(), fields, embeds)
+	ff, err := f.getFormat(src.Type(), fields)
 	if err != nil {
 		return nil, err
 	}
-	dst, err := f.doFormatObject(src, ff, fields, embeds)
+	dst, err := f.doFormatObject(src, ff)
 	if err != nil {
 		return nil, err
 	}
@@ -98,21 +72,21 @@ func (f *Formatter) FormatObject(o interface{}, fields []string, embeds []string
 }
 
 // FormatList formats a slice.
-func (f *Formatter) FormatList(o interface{}, fields []string, embeds []string) (interface{}, error) {
-	if len(fields) == 0 && len(embeds) == 0 {
+func (f *Formatter) FormatList(o interface{}, fields []string) (interface{}, error) {
+	if len(fields) == 0 {
 		return o, nil
 	}
 	src := reflect.Indirect(reflect.ValueOf(o))
 	if src.Kind() != reflect.Slice {
 		return nil, errors.New("input is not a slice")
 	}
-	ff, err := f.getFormat(src.Type().Elem(), fields, embeds)
+	ff, err := f.getFormat(src.Type().Elem(), fields)
 	if err != nil {
 		return nil, err
 	}
 	dst := reflect.MakeSlice(reflect.SliceOf(ff.t), src.Len(), src.Len())
 	for i := 0; i < src.Len(); i++ {
-		out, err := f.doFormatObject(src.Index(i), ff, fields, embeds)
+		out, err := f.doFormatObject(src.Index(i), ff)
 		if err != nil {
 			return nil, err
 		}
@@ -121,42 +95,17 @@ func (f *Formatter) FormatList(o interface{}, fields []string, embeds []string) 
 	return dst.Interface(), nil
 }
 
-func (f *Formatter) doFormatObject(src reflect.Value, ff format, fields []string, embeds []string) (reflect.Value, error) {
+func (f *Formatter) doFormatObject(src reflect.Value, ff format) (reflect.Value, error) {
 	pdst := reflect.New(ff.t)
 	dst := pdst.Elem()
-	var embedded map[string]reflect.Value
-	if len(embeds) > 0 {
-		embedded = map[string]reflect.Value{}
-		var ids []string
-		for _, e := range embeds {
-			ids = append(ids, f.embeds[e].idfield)
-		}
-		def, err := f.getFormat(src.Type(), ids, nil)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		for i, e := range embeds {
-			iv := src.FieldByIndex(def.fields[ids[i]].src.Index)
-			o, err := f.embeds[e].embedder(iv.Interface())
-			if err != nil {
-				return reflect.Value{}, err
-			}
-			embedded[e] = reflect.Indirect(reflect.ValueOf(o))
-		}
-	}
 	for key := range ff.fields {
-		var sf reflect.Value
-		if ff.fields[key].embed != "" {
-			sf = embedded[ff.fields[key].embed].FieldByIndex(ff.fields[key].src.Index)
-		} else {
-			sf = src.FieldByIndex(ff.fields[key].src.Index)
-		}
+		sf := src.FieldByIndex(ff.fields[key].src.Index)
 		dst.FieldByIndex(ff.fields[key].dst.Index).Set(sf)
 	}
 	return dst, nil
 }
 
-func (f *Formatter) getFormat(t reflect.Type, fields []string, embeds []string) (format, error) {
+func (f *Formatter) getFormat(t reflect.Type, fields []string) (format, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.fields[t] == nil {
@@ -167,19 +116,12 @@ func (f *Formatter) getFormat(t reflect.Type, fields []string, embeds []string) 
 	}
 	if len(fields) == 0 {
 		fields = f.fieldnames[t]
-		for _, embed := range embeds {
-			if e, found := f.embeds[embed]; found {
-				fields = append(fields, f.fieldnames[e.t]...)
-			} else {
-				return format{}, fmt.Errorf("embed %s was not registered", embed)
-			}
-		}
 	}
 	sig := strings.Join(fields, "|")
 	if fmt, found := f.formats[t][sig]; found {
 		return fmt, nil
 	}
-	fmt, err := f.buildFormat(t, fields, embeds)
+	fmt, err := f.buildFormat(t, fields)
 	if err != nil {
 		return format{}, err
 	}
@@ -247,7 +189,7 @@ func (f *Formatter) parseStruct(t reflect.Type) ([]string, map[string]reflect.St
 	return fields, sf, nil
 }
 
-func (f *Formatter) buildType(t reflect.Type, fields []string, embeds map[string]bool, prefix string) (reflect.Type, error) {
+func (f *Formatter) buildType(t reflect.Type, fields []string, prefix string) (reflect.Type, error) {
 	done := map[string]bool{}
 	var lf []reflect.StructField
 	for _, fld := range fields {
@@ -260,15 +202,7 @@ func (f *Formatter) buildType(t reflect.Type, fields []string, embeds map[string
 			if done[subtag] {
 				continue
 			}
-			var (
-				subt reflect.Type
-				err  error
-			)
-			if embeds[subtag] {
-				subt, err = f.buildType(f.embeds[subtag].t, fields, nil, prefix+subtag+".")
-			} else {
-				subt, err = f.buildType(t, fields, nil, prefix+subtag+".")
-			}
+			subt, err := f.buildType(t, fields, prefix+subtag+".")
 			if err != nil {
 				return nil, err
 			}
@@ -290,12 +224,8 @@ func (f *Formatter) buildType(t reflect.Type, fields []string, embeds map[string
 	return reflect.StructOf(lf), nil
 }
 
-func (f *Formatter) buildFormat(t reflect.Type, fields []string, embeds []string) (format, error) {
-	embedsmap := map[string]bool{}
-	for _, e := range embeds {
-		embedsmap[e] = true
-	}
-	ot, err := f.buildType(t, fields, embedsmap, "")
+func (f *Formatter) buildFormat(t reflect.Type, fields []string) (format, error) {
+	ot, err := f.buildType(t, fields, "")
 	if err != nil {
 		return format{}, err
 	}
@@ -305,17 +235,7 @@ func (f *Formatter) buildFormat(t reflect.Type, fields []string, embeds []string
 		return format{}, err
 	}
 	for k, df := range dsf {
-		if idx := strings.Index(k, "."); idx != -1 && embedsmap[k[:idx]] {
-			name := k[:idx]
-			if sf, found := f.fields[f.embeds[name].t][k]; found {
-				ff.fields[k] = mapping{
-					src: sf, dst: df,
-					embed: name,
-				}
-			} else {
-				return format{}, fmt.Errorf("missing field %s in input format", k)
-			}
-		} else if sf, found := f.fields[t][k]; found {
+		if sf, found := f.fields[t][k]; found {
 			ff.fields[k] = mapping{
 				src: sf, dst: df,
 			}

@@ -2,7 +2,6 @@ package dynjson
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -203,7 +202,7 @@ func TestFormatter_FormatObject(t *testing.T) {
 			if tt.format != "" {
 				fields = strings.Split(tt.format, ",")
 			}
-			o, err := f.FormatObject(tt.src, fields, nil)
+			o, err := f.FormatObject(tt.src, fields)
 			if tt.err != "" {
 				if err == nil {
 					t.Fail()
@@ -227,105 +226,15 @@ func TestFormatter_FormatObject(t *testing.T) {
 	}
 }
 
-type testEmbed struct {
-	Bar int `json:"bar"`
-	Baz int `json:"baz"`
-}
 type testStruct struct {
 	Foo int    `json:"foo"`
 	Bar string `json:"bar,omitempty"`
 }
 
-func testEmbedder(id interface{}) (interface{}, error) {
-	switch id.(int) {
-	case 1:
-		return &testEmbed{Bar: 2, Baz: 3}, nil
-	case 2:
-		return testEmbed{Bar: 3, Baz: 4}, nil
-	default:
-		return nil, errors.New("not found")
-	}
-}
-
-func TestFormatter_Embed(t *testing.T) {
-	f := NewFormatter()
-	err := f.RegisterEmbed("embed", "foo", testEmbedder, &testEmbed{})
-	if err != nil {
-		t.Error("Register returned unexpected error", err)
-	}
-	var tests = []struct {
-		foo    int
-		embed  string
-		format string
-		output string
-		err    string
-	}{
-		{
-			foo:   1,
-			embed: "foo",
-			err:   "embed foo was not registered",
-		},
-		{
-			foo:    1,
-			embed:  "embed",
-			output: `{"foo":1,"embed":{"bar":2,"baz":3}}`,
-		},
-		{
-			foo:    1,
-			embed:  "embed",
-			format: "foo,embed.bar",
-			output: `{"foo":1,"embed":{"bar":2}}`,
-		},
-		{
-			foo:    2,
-			embed:  "embed",
-			output: `{"foo":2,"embed":{"bar":3,"baz":4}}`,
-		},
-		{
-			foo:   3,
-			embed: "embed",
-			err:   "not found",
-		},
-	}
-	for i, tt := range tests {
-		t.Run(fmt.Sprintf("test #%d", i), func(t *testing.T) {
-			var fields []string
-			if tt.format != "" {
-				fields = strings.Split(tt.format, ",")
-			}
-			o, err := f.FormatObject(testStruct{Foo: tt.foo}, fields, []string{tt.embed})
-			if tt.err != "" {
-				if err == nil {
-					t.Fail()
-				}
-				if tt.err != err.Error() {
-					t.Errorf("Returned error '%v', expected '%s'", err, tt.err)
-				}
-			} else {
-				if err != nil {
-					t.Error("Should not have returned", err)
-				}
-				buf, err := json.Marshal(o)
-				if err != nil {
-					t.Error("Should not have returned", err)
-				}
-				if tt.output != string(buf) {
-					t.Errorf("Returned '%s', expected '%s'", string(buf), tt.output)
-				}
-			}
-		})
-	}
-}
-
 func TestFormatter_FormatList(t *testing.T) {
 	f := NewFormatter()
-	err := f.RegisterEmbed("embed", "foo", testEmbedder, &testEmbed{})
-	if err != nil {
-		t.Error("Register returned unexpected error", err)
-	}
 	var tests = []struct {
 		src    []testStruct
-		embed  string
 		format string
 		output string
 		err    string
@@ -339,27 +248,14 @@ func TestFormatter_FormatList(t *testing.T) {
 			format: "foo",
 			output: `[{"foo":1},{"foo":2}]`,
 		},
-		{
-			src:    []testStruct{{Foo: 1}, {Foo: 2}},
-			embed:  "embed",
-			output: `[{"foo":1,"embed":{"bar":2,"baz":3}},{"foo":2,"embed":{"bar":3,"baz":4}}]`,
-		},
-		{
-			src:   []testStruct{{Foo: 1}, {Foo: 3}},
-			embed: "embed",
-			err:   "not found",
-		},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("test #%d", i), func(t *testing.T) {
-			var fields, embeds []string
+			var fields []string
 			if tt.format != "" {
 				fields = strings.Split(tt.format, ",")
 			}
-			if tt.embed != "" {
-				embeds = strings.Split(tt.embed, ",")
-			}
-			o, err := f.FormatList(tt.src, fields, embeds)
+			o, err := f.FormatList(tt.src, fields)
 			if tt.err != "" {
 				if err == nil {
 					t.Fail()
@@ -387,7 +283,7 @@ func BenchmarkFormatter_FormatObject_Fields(b *testing.B) {
 	f := NewFormatter()
 	w := json.NewEncoder(ioutil.Discard)
 	for i := 0; i < b.N; i++ {
-		o, _ := f.FormatObject(testStruct{Foo: i, Bar: "bar"}, []string{"foo", "bar"}, nil)
+		o, _ := f.FormatObject(testStruct{Foo: i, Bar: "bar"}, []string{"foo", "bar"})
 		w.Encode(o)
 	}
 }
@@ -396,7 +292,7 @@ func BenchmarkFormatter_FormatObject_NoFields(b *testing.B) {
 	f := NewFormatter()
 	w := json.NewEncoder(ioutil.Discard)
 	for i := 0; i < b.N; i++ {
-		o, _ := f.FormatObject(testStruct{Foo: i, Bar: "bar"}, nil, nil)
+		o, _ := f.FormatObject(testStruct{Foo: i, Bar: "bar"}, nil)
 		w.Encode(o)
 	}
 }
