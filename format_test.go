@@ -302,7 +302,7 @@ func BenchmarkFormat_Fields(b *testing.B) {
 			Foo int
 			Bar string
 		}{Foo: i, Bar: "bar"}, []string{"foo", "bar"})
-		w.Encode(o)
+		_ = w.Encode(o)
 	}
 }
 
@@ -314,14 +314,14 @@ func BenchmarkFormat_NoFields(b *testing.B) {
 			Foo int
 			Bar string
 		}{Foo: i, Bar: "bar"}, nil)
-		w.Encode(o)
+		_ = w.Encode(o)
 	}
 }
 
 func BenchmarkRawJSON(b *testing.B) {
 	w := json.NewEncoder(ioutil.Discard)
 	for i := 0; i < b.N; i++ {
-		w.Encode(struct {
+		_ = w.Encode(struct {
 			Foo int
 			Bar string
 		}{Foo: i, Bar: "bar"})
