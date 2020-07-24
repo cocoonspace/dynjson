@@ -1,4 +1,4 @@
-# dynjson [![](https://godoc.org/github.com/cocoonspace/dynjson?status.svg)](https://godoc.org/github.com/cocoonspace/dynjson) [![Build Status](https://travis-ci.org/cocoonspace/dynjson.svg?branch=master)](https://travis-ci.org/cocoonspace/dynjson) [![Coverage Status](https://coveralls.io/repos/github/cocoonspace/dynjson/badge.svg?branch=master)](https://coveralls.io/github/cocoonspace/dynjson?branch=master)
+# dynjson [![](https://godoc.org/github.com/cocoonspace/dynjson?status.svg)](https://godoc.org/github.com/cocoonspace/dynjson) [![Build Status](https://travis-ci.org/cocoonspace/dynjson.svg?branch=master)](https://travis-ci.org/cocoonspace/dynjson) [![Coverage Status](https://coveralls.io/repos/github/cocoonspace/dynjson/badge.svg?branch=master)](https://coveralls.io/github/cocoonspace/dynjson?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/cocoonspace/dynjson)](https://goreportcard.com/report/github.com/cocoonspace/dynjson)
 
 Client-customizable JSON formats for dynamic APIs.
 
