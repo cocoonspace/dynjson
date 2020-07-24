@@ -33,7 +33,7 @@ type APIResult struct {
 f := dynjson.NewFormatter()
 
 res := &APIResult{Foo:1, Bar:"bar"}
-o, err := f.Format(res, []string{"foo"}, nil)
+o, err := f.Format(res, dynjson.FieldsFromRequest(r))
 if err != nil {
     // handle error
 }
@@ -51,7 +51,7 @@ type APIResult struct {
 f := dynjson.NewFormatter()
 
 res := []APIResult{{Foo:1, Bar:"bar"}}
-o, err := f.Format(res, []string{"foo"}, nil)
+o, err := f.Format(res, []string{"foo"})
 if err != nil {
     // handle error
 }
@@ -73,7 +73,7 @@ type APIItem struct {
 f := dynjson.NewFormatter()
 
 res := &APIResult{Foo:1, Bar:[]APIItem{{BarFoo:1, BarBar: "bar"}}}
-o, err := f.Format(res, []string{"foo", "bar.barfoo"}, nil)
+o, err := f.Format(res, []string{"foo", "bar.barfoo"})
 if err != nil {
     // handle error
 }

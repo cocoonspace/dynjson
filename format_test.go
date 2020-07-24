@@ -1,9 +1,10 @@
-package dynjson
+package dynjson_test
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"pkgs/dynjson"
 	"strings"
 	"testing"
 )
@@ -337,7 +338,7 @@ func TestFormat(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("test #%d", i), func(t *testing.T) {
-			f := NewFormatter()
+			f := dynjson.NewFormatter()
 			var fields []string
 			if tt.format != "" {
 				fields = strings.Split(tt.format, ",")
@@ -377,7 +378,7 @@ func TestFormatAnonymous(t *testing.T) {
 		Embedded: Embedded{Foo: 1},
 		Bar:      2,
 	}
-	f := NewFormatter()
+	f := dynjson.NewFormatter()
 	o, err := f.Format(src, []string{"foo.foo", "bar"})
 	if err != nil {
 		t.Error("Should not have returned", err)
@@ -392,7 +393,7 @@ func TestFormatAnonymous(t *testing.T) {
 }
 
 func BenchmarkFormat_Fields(b *testing.B) {
-	f := NewFormatter()
+	f := dynjson.NewFormatter()
 	w := json.NewEncoder(ioutil.Discard)
 	for i := 0; i < b.N; i++ {
 		o, _ := f.Format(struct {
@@ -404,7 +405,7 @@ func BenchmarkFormat_Fields(b *testing.B) {
 }
 
 func BenchmarkFormat_NoFields(b *testing.B) {
-	f := NewFormatter()
+	f := dynjson.NewFormatter()
 	w := json.NewEncoder(ioutil.Discard)
 	for i := 0; i < b.N; i++ {
 		o, _ := f.Format(struct {
