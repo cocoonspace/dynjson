@@ -9,6 +9,7 @@ import (
 )
 
 func TestFormat(t *testing.T) {
+	var one = 1
 	var tests = []struct {
 		src    interface{}
 		format string
@@ -163,6 +164,28 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			src: struct {
+				Foo *int `json:"foo,omitempty"`
+				Bar int  `json:"bar"`
+			}{
+				Foo: &one,
+				Bar: 1,
+			},
+			format: "foo,bar",
+			output: `{"foo":1,"bar":1}`,
+		},
+		{
+			src: struct {
+				Foo *int `json:"foo,omitempty"`
+				Bar int  `json:"bar"`
+			}{
+				Foo: nil,
+				Bar: 1,
+			},
+			format: "foo,bar",
+			output: `{"bar":1}`,
+		},
+		{
+			src: struct {
 				Foo *struct {
 					Bar int `json:"bar"`
 				} `json:"foo,omitempty"`
@@ -243,6 +266,19 @@ func TestFormat(t *testing.T) {
 			},
 			format: "foo",
 			output: `[{"foo":1}]`,
+		},
+		{
+			src: struct {
+				Foo []int `json:"foo"`
+				Bar int   `json:"bar"`
+				Baz int   `json:"baz"`
+			}{
+				Foo: []int{1, 2, 3},
+				Bar: 1,
+				Baz: 2,
+			},
+			format: "foo",
+			output: `{"foo":[1,2,3]}`,
 		},
 		{
 			src: struct {
