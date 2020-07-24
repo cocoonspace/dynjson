@@ -1,5 +1,5 @@
 # dynjson
-User-customizable JSON formats for dynamic APIs.
+Client-customizable JSON formats for dynamic APIs.
 
 ## Introduction
 
@@ -22,8 +22,6 @@ go get github.com/cocoon-space/dynjson
 
 ## Usage
 
-Standard use :
-
 ```go
 type APIResult struct {
     Foo int     `json:"foo"`
@@ -33,9 +31,50 @@ type APIResult struct {
 f := dynjson.NewFormatter()
 
 res := &APIResult{Foo:1, Bar:"bar"}
-o, err := f.FormatObject(o, []string{"foo"}, nil)
+o, err := f.Format(res, []string{"foo"}, nil)
 if err != nil {
     // handle error
 }
 err := json.Marshal(w, o) // {"foo": 1}
 ```
+
+With slices:
+
+```go
+type APIResult struct {
+    Foo int     `json:"foo"`
+    Bar string  `json:"bar"`
+}
+
+f := dynjson.NewFormatter()
+
+res := []APIResult{{Foo:1, Bar:"bar"}}
+o, err := f.Format(res, []string{"foo"}, nil)
+if err != nil {
+    // handle error
+}
+err := json.Marshal(w, o) // [{"foo": 1}]
+```
+
+
+```go
+type APIResult struct {
+    Foo int        `json:"foo"`
+    Bar []APIItem  `json:"bar"`
+}
+
+type APIItem struct {
+    BarFoo int    `json:"barfoo"`
+    BarBar string `json:"barbar"`
+}
+
+f := dynjson.NewFormatter()
+
+res := &APIResult{Foo:1, Bar:[]APIItem{{BarFoo:1, BarBar: "bar"}}}
+o, err := f.Format(res, []string{"foo", "bar.barfoo"}, nil)
+if err != nil {
+    // handle error
+}
+err := json.Marshal(w, o) // {"foo": 1, "bar":[{"barfoo": 1}]}
+```
+

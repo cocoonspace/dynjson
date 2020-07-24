@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestFormatter_FormatObject(t *testing.T) {
+func TestFormat(t *testing.T) {
 	var tests = []struct {
 		src    interface{}
 		format string
@@ -18,7 +18,7 @@ func TestFormatter_FormatObject(t *testing.T) {
 		{
 			src:    struct{ Foo int }{Foo: 1},
 			format: "bar",
-			err:    "no field bar found",
+			err:    "field 'bar' does not exist",
 		},
 		{
 			src:    struct{ Foo int }{Foo: 1},
@@ -43,6 +43,13 @@ func TestFormatter_FormatObject(t *testing.T) {
 			}{Foo: 1},
 			format: "foo",
 			output: `{"foo":1}`,
+		},
+		{
+			src: struct {
+				Foo int `json:"foo,omitempty"`
+			}{},
+			format: "foo",
+			output: `{}`,
 		},
 		{
 			src: struct {
@@ -156,6 +163,36 @@ func TestFormatter_FormatObject(t *testing.T) {
 		},
 		{
 			src: struct {
+				Foo *struct {
+					Bar int `json:"bar"`
+				} `json:"foo,omitempty"`
+				Baz string `json:"baz"`
+			}{
+				Foo: &struct {
+					Bar int `json:"bar"`
+				}{
+					Bar: 1,
+				},
+				Baz: "baz",
+			},
+			format: "foo.bar,baz",
+			output: `{"foo":{"bar":1},"baz":"baz"}`,
+		},
+		{
+			src: struct {
+				Foo *struct {
+					Bar int `json:"bar"`
+				} `json:"foo,omitempty"`
+				Baz string `json:"baz"`
+			}{
+				Foo: nil,
+				Baz: "baz",
+			},
+			format: "foo.bar,baz",
+			output: `{"baz":"baz"}`,
+		},
+		{
+			src: struct {
 				Foo struct {
 					Foo int `json:"foo"`
 					Bar int `json:"bar"`
@@ -194,6 +231,37 @@ func TestFormatter_FormatObject(t *testing.T) {
 			format: "foo.bar,baz,foo.foo",
 			output: `{"foo":{"bar":2,"foo":1},"baz":"baz"}`,
 		},
+		{
+			src: []struct {
+				Foo int `json:"foo"`
+				Bar int `json:"bar"`
+			}{
+				{
+					Foo: 1,
+					Bar: 2,
+				},
+			},
+			format: "foo",
+			output: `[{"foo":1}]`,
+		},
+		{
+			src: struct {
+				Foo []struct {
+					Bar int `json:"bar"`
+					Baz int `json:"baz"`
+				} `json:"foo"`
+			}{
+				Foo: []struct {
+					Bar int `json:"bar"`
+					Baz int `json:"baz"`
+				}{{
+					Bar: 1,
+					Baz: 2,
+				}},
+			},
+			format: "foo.bar",
+			output: `{"foo":[{"bar":1}]}`,
+		},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("test #%d", i), func(t *testing.T) {
@@ -202,7 +270,7 @@ func TestFormatter_FormatObject(t *testing.T) {
 			if tt.format != "" {
 				fields = strings.Split(tt.format, ",")
 			}
-			o, err := f.FormatObject(tt.src, fields)
+			o, err := f.Format(tt.src, fields)
 			if tt.err != "" {
 				if err == nil {
 					t.Fail()
@@ -226,73 +294,26 @@ func TestFormatter_FormatObject(t *testing.T) {
 	}
 }
 
-type testStruct struct {
-	Foo int    `json:"foo"`
-	Bar string `json:"bar,omitempty"`
-}
-
-func TestFormatter_FormatList(t *testing.T) {
-	f := NewFormatter()
-	var tests = []struct {
-		src    []testStruct
-		format string
-		output string
-		err    string
-	}{
-		{
-			src:    []testStruct{{Foo: 1, Bar: "bar"}, {Foo: 2, Bar: "baz"}},
-			output: `[{"foo":1,"bar":"bar"},{"foo":2,"bar":"baz"}]`,
-		},
-		{
-			src:    []testStruct{{Foo: 1, Bar: "bar"}, {Foo: 2, Bar: "baz"}},
-			format: "foo",
-			output: `[{"foo":1},{"foo":2}]`,
-		},
-	}
-	for i, tt := range tests {
-		t.Run(fmt.Sprintf("test #%d", i), func(t *testing.T) {
-			var fields []string
-			if tt.format != "" {
-				fields = strings.Split(tt.format, ",")
-			}
-			o, err := f.FormatList(tt.src, fields)
-			if tt.err != "" {
-				if err == nil {
-					t.Fail()
-				}
-				if tt.err != err.Error() {
-					t.Errorf("Returned error '%v', expected '%s'", err, tt.err)
-				}
-			} else {
-				if err != nil {
-					t.Error("Should not have returned", err)
-				}
-				buf, err := json.Marshal(o)
-				if err != nil {
-					t.Error("Should not have returned", err)
-				}
-				if tt.output != string(buf) {
-					t.Errorf("Returned '%s', expected '%s'", string(buf), tt.output)
-				}
-			}
-		})
-	}
-}
-
-func BenchmarkFormatter_FormatObject_Fields(b *testing.B) {
+func BenchmarkFormat_Fields(b *testing.B) {
 	f := NewFormatter()
 	w := json.NewEncoder(ioutil.Discard)
 	for i := 0; i < b.N; i++ {
-		o, _ := f.FormatObject(testStruct{Foo: i, Bar: "bar"}, []string{"foo", "bar"})
+		o, _ := f.Format(struct {
+			Foo int
+			Bar string
+		}{Foo: i, Bar: "bar"}, []string{"foo", "bar"})
 		w.Encode(o)
 	}
 }
 
-func BenchmarkFormatter_FormatObject_NoFields(b *testing.B) {
+func BenchmarkFormat_NoFields(b *testing.B) {
 	f := NewFormatter()
 	w := json.NewEncoder(ioutil.Discard)
 	for i := 0; i < b.N; i++ {
-		o, _ := f.FormatObject(testStruct{Foo: i, Bar: "bar"}, nil)
+		o, _ := f.Format(struct {
+			Foo int
+			Bar string
+		}{Foo: i, Bar: "bar"}, nil)
 		w.Encode(o)
 	}
 }
@@ -300,6 +321,9 @@ func BenchmarkFormatter_FormatObject_NoFields(b *testing.B) {
 func BenchmarkRawJSON(b *testing.B) {
 	w := json.NewEncoder(ioutil.Discard)
 	for i := 0; i < b.N; i++ {
-		w.Encode(testStruct{Foo: i, Bar: "bar"})
+		w.Encode(struct {
+			Foo int
+			Bar string
+		}{Foo: i, Bar: "bar"})
 	}
 }
