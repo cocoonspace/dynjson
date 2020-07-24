@@ -1,10 +1,8 @@
-package dynjson_test
+package dynjson
 
 import (
 	"net/http"
 	"testing"
-
-	"pkgs/dynjson"
 )
 
 func TestFieldsFromRequest(t *testing.T) {
@@ -13,7 +11,7 @@ func TestFieldsFromRequest(t *testing.T) {
 		if err != nil {
 			t.Error("Should not have returned", err)
 		}
-		fields := dynjson.FieldsFromRequest(r)
+		fields := FieldsFromRequest(r)
 		if len(fields) != 2 {
 			t.Error("2 fields were expected")
 		}
@@ -26,7 +24,7 @@ func TestFieldsFromRequest(t *testing.T) {
 		if err != nil {
 			t.Error("Should not have returned", err)
 		}
-		fields := dynjson.FieldsFromRequest(r, dynjson.OptionMultipleFields)
+		fields := FieldsFromRequest(r, OptionMultipleFields)
 		if len(fields) != 2 {
 			t.Error("2 fields were expected")
 		}
@@ -39,7 +37,7 @@ func TestFieldsFromRequest(t *testing.T) {
 		if err != nil {
 			t.Error("Should not have returned", err)
 		}
-		fields := dynjson.FieldsFromRequest(r, dynjson.OptionCommaList)
+		fields := FieldsFromRequest(r, OptionCommaList)
 		if len(fields) != 2 {
 			t.Error("2 fields were expected")
 		}
