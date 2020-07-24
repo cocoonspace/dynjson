@@ -44,65 +44,46 @@ type structBuilder struct {
 
 func (b *structBuilder) build(fields []string) (formatter, error) {
 	if len(fields) == 0 {
-		return &primitiveFormatter{}, nil
+		return &primitiveFormatter{t: b.t}, nil
 	}
 	var lf []reflect.StructField
 	mappings := map[string]mapping{}
 	for _, field := range fields {
+		var (
+			subfields []string
+		)
 		if idx := strings.Index(field, "."); idx != -1 {
-			subtag := field[:idx]
-			if _, found := mappings[subtag]; found {
+			tag := field[:idx]
+			if _, found := mappings[tag]; found {
 				continue
 			}
-			subbuilder := b.builders[subtag]
-			if subbuilder == nil {
-				return nil, fmt.Errorf("field '%s' does not exist", subtag)
-			}
-			var subfields []string
 			for _, subfield := range fields {
 				if strings.HasPrefix(subfield, field[:idx+1]) {
 					subfields = append(subfields, subfield[idx+1:])
 				}
 			}
-			fmter, err := subbuilder.build(subfields)
-			if err != nil {
-				return nil, err
-			}
-			sf := reflect.StructField{
-				Name:      strings.ToUpper(subtag),
-				Tag:       reflect.StructTag(`json:"` + b.tags[subtag] + `"`),
-				Type:      fmter.typ(),
-				Anonymous: b.fields[subtag].Anonymous,
-			}
-			lf = append(lf, sf)
-			sf.Index = []int{len(lf) - 1}
-			mappings[subtag] = mapping{
-				src:    b.fields[subtag],
-				dst:    sf,
-				format: fmter,
-			}
-		} else {
-			fieldbuilder := b.builders[field]
-			if fieldbuilder == nil {
-				return nil, fmt.Errorf("field '%s' does not exist", field)
-			}
-			fmter, err := fieldbuilder.build(nil)
-			if err != nil {
-				return nil, err
-			}
-			sf := reflect.StructField{
-				Name:      strings.ToUpper(field),
-				Tag:       reflect.StructTag(`json:"` + b.tags[field] + `"`),
-				Type:      fmter.typ(),
-				Anonymous: b.fields[field].Anonymous,
-			}
-			lf = append(lf, sf)
-			sf.Index = []int{len(lf) - 1}
-			mappings[field] = mapping{
-				src:    b.fields[field],
-				dst:    sf,
-				format: fmter,
-			}
+			field = tag
+		}
+		subb := b.builders[field]
+		if subb == nil {
+			return nil, fmt.Errorf("field '%s' does not exist", field)
+		}
+		fmter, err := subb.build(subfields)
+		if err != nil {
+			return nil, err
+		}
+		sf := reflect.StructField{
+			Name:      strings.ToUpper(field),
+			Tag:       reflect.StructTag(`json:"` + b.tags[field] + `"`),
+			Type:      fmter.typ(),
+			Anonymous: b.fields[field].Anonymous,
+		}
+		lf = append(lf, sf)
+		sf.Index = []int{len(lf) - 1}
+		mappings[field] = mapping{
+			src:    b.fields[field],
+			dst:    sf,
+			format: fmter,
 		}
 	}
 	return &structFormatter{t: reflect.StructOf(lf), mappings: mappings}, nil

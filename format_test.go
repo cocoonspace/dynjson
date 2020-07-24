@@ -148,6 +148,42 @@ func TestFormat(t *testing.T) {
 		{
 			src: struct {
 				Foo struct {
+					Bar int    `json:"bar"`
+					Baz string `json:"baz"`
+				} `json:"foo"`
+			}{
+				Foo: struct {
+					Bar int    `json:"bar"`
+					Baz string `json:"baz"`
+				}{
+					Bar: 1,
+					Baz: "baz",
+				},
+			},
+			format: "foo",
+			output: `{"foo":{"bar":1,"baz":"baz"}}`,
+		},
+		{
+			src: struct {
+				Foo struct {
+					Bar int    `json:"bar"`
+					Baz string `json:"baz"`
+				} `json:"foo"`
+			}{
+				Foo: struct {
+					Bar int    `json:"bar"`
+					Baz string `json:"baz"`
+				}{
+					Bar: 1,
+					Baz: "baz",
+				},
+			},
+			format: "foo",
+			output: `{"foo":{"bar":1,"baz":"baz"}}`,
+		},
+		{
+			src: struct {
+				Foo struct {
 					Bar int `json:"bar"`
 				} `json:"foo"`
 				Baz string `json:"baz"`
@@ -327,6 +363,31 @@ func TestFormat(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestFormatAnonymous(t *testing.T) {
+	type Embedded struct {
+		Foo int `json:"foo"`
+	}
+	src := struct {
+		Embedded `json:"foo"`
+		Bar      int `json:"bar"`
+	}{
+		Embedded: Embedded{Foo: 1},
+		Bar:      2,
+	}
+	f := NewFormatter()
+	o, err := f.Format(src, []string{"foo.foo", "bar"})
+	if err != nil {
+		t.Error("Should not have returned", err)
+	}
+	buf, err := json.Marshal(o)
+	if err != nil {
+		t.Error("Should not have returned", err)
+	}
+	if string(buf) != `{"foo":{"foo":1},"bar":2}` {
+		t.Errorf("Returned '%s', expected '%s'", string(buf), `{"foo":1,"bar":2}`)
 	}
 }
 
