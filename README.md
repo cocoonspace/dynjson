@@ -2,7 +2,6 @@
 
 Client-customizable JSON formats for dynamic APIs.
 
-
 ## Introduction
 
 dynjson allow APIs to return only fields selected by the API client :
@@ -25,7 +24,7 @@ The field order is the same as the select parameters.
 
 go get github.com/cocoonspace/dynjson
 
-## Usage
+## Examples
 
 ```go
 type APIResult struct {
@@ -107,11 +106,12 @@ if err != nil {
 err := json.Marshal(w, o) // {"foo": 1, "bar":[{"barfoo": 1}]}
 ```
 
-# Anonymous fields
+## Limitations
 
-Anonymous fields without a json tag are not supported.
+* Anonymous fields without a json tag (embedded by the Go JSON encoder in the enclosing struct) are not supported,
+* Maps are copied as is, you cannot filter map contents using `map_field_name.map_key`.
 
-# Performance impact
+## Performance impact
 
 ```
 BenchmarkFormat_Fields
@@ -122,6 +122,12 @@ BenchmarkRawJSON
 BenchmarkRawJSON-8           	 5351313	       223 ns/op	      32 B/op	       1 allocs/op
 ```
 
-# License
+## Contribution guidelines
+
+Contributions are welcome, as long as :
+* unit tests & comments are included,
+* no external package is used.
+
+## License
 
 MIT - See LICENSE
