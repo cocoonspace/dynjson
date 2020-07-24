@@ -18,6 +18,9 @@ GET https://api.example.com/v1/foos/1?select=foo
 {"foo":1}
 ```
 
+dynjson mimicks the original struct using the original types and json tags.
+The field order is the same as the select parameters.
+
 ## Installation
 
 go get github.com/cocoonspace/dynjson
@@ -33,11 +36,35 @@ type APIResult struct {
 f := dynjson.NewFormatter()
 
 res := &APIResult{Foo:1, Bar:"bar"}
-o, err := f.Format(res, []string{"foo"}, nil)
+o, err := f.Format(res, dynjson.FieldsFromRequest(r))
 if err != nil {
     // handle error
 }
 err := json.Marshal(w, o) // {"foo": 1}
+```
+
+With struct fields :
+
+
+```go
+type APIResult struct {
+    Foo int          `json:"foo"`
+    Bar APIIncluded  `json:"bar"`
+}
+
+type APIIncluded struct {
+    BarFoo int    `json:"barfoo"`
+    BarBar string `json:"barbar"`
+}
+
+f := dynjson.NewFormatter()
+
+res := &APIResult{Foo: 1, Bar: APIIncluded{BarFoo:1, BarBar: "bar"}}
+o, err := f.Format(res, []string{"foo", "bar.barfoo"})
+if err != nil {
+    // handle error
+}
+err := json.Marshal(w, o) // {"foo": 1, "bar":{"barfoo": 1}}
 ```
 
 With slices:
@@ -50,8 +77,8 @@ type APIResult struct {
 
 f := dynjson.NewFormatter()
 
-res := []APIResult{{Foo:1, Bar:"bar"}}
-o, err := f.Format(res, []string{"foo"}, nil)
+res := []APIResult{{Foo: 1, Bar: "bar"}}
+o, err := f.Format(res, []string{"foo"})
 if err != nil {
     // handle error
 }
@@ -72,8 +99,8 @@ type APIItem struct {
 
 f := dynjson.NewFormatter()
 
-res := &APIResult{Foo:1, Bar:[]APIItem{{BarFoo:1, BarBar: "bar"}}}
-o, err := f.Format(res, []string{"foo", "bar.barfoo"}, nil)
+res := &APIResult{Foo: 1, Bar: []APIItem{{BarFoo: 1, BarBar: "bar"}}}
+o, err := f.Format(res, []string{"foo", "bar.barfoo"})
 if err != nil {
     // handle error
 }
