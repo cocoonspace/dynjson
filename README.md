@@ -80,6 +80,10 @@ if err != nil {
 err := json.Marshal(w, o) // {"foo": 1, "bar":[{"barfoo": 1}]}
 ```
 
+# Anonymous fields
+
+Anonymous fields without a json tag are not supported.
+
 # Performance impact
 
 ```

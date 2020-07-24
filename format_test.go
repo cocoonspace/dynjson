@@ -9,6 +9,7 @@ import (
 )
 
 func TestFormat(t *testing.T) {
+	var one = 1
 	var tests = []struct {
 		src    interface{}
 		format string
@@ -147,6 +148,42 @@ func TestFormat(t *testing.T) {
 		{
 			src: struct {
 				Foo struct {
+					Bar int    `json:"bar"`
+					Baz string `json:"baz"`
+				} `json:"foo"`
+			}{
+				Foo: struct {
+					Bar int    `json:"bar"`
+					Baz string `json:"baz"`
+				}{
+					Bar: 1,
+					Baz: "baz",
+				},
+			},
+			format: "foo",
+			output: `{"foo":{"bar":1,"baz":"baz"}}`,
+		},
+		{
+			src: struct {
+				Foo struct {
+					Bar int    `json:"bar"`
+					Baz string `json:"baz"`
+				} `json:"foo"`
+			}{
+				Foo: struct {
+					Bar int    `json:"bar"`
+					Baz string `json:"baz"`
+				}{
+					Bar: 1,
+					Baz: "baz",
+				},
+			},
+			format: "foo",
+			output: `{"foo":{"bar":1,"baz":"baz"}}`,
+		},
+		{
+			src: struct {
+				Foo struct {
 					Bar int `json:"bar"`
 				} `json:"foo"`
 				Baz string `json:"baz"`
@@ -160,6 +197,28 @@ func TestFormat(t *testing.T) {
 			},
 			format: "foo.bar,baz",
 			output: `{"foo":{"bar":1},"baz":"baz"}`,
+		},
+		{
+			src: struct {
+				Foo *int `json:"foo,omitempty"`
+				Bar int  `json:"bar"`
+			}{
+				Foo: &one,
+				Bar: 1,
+			},
+			format: "foo,bar",
+			output: `{"foo":1,"bar":1}`,
+		},
+		{
+			src: struct {
+				Foo *int `json:"foo,omitempty"`
+				Bar int  `json:"bar"`
+			}{
+				Foo: nil,
+				Bar: 1,
+			},
+			format: "foo,bar",
+			output: `{"bar":1}`,
 		},
 		{
 			src: struct {
@@ -246,6 +305,19 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			src: struct {
+				Foo []int `json:"foo"`
+				Bar int   `json:"bar"`
+				Baz int   `json:"baz"`
+			}{
+				Foo: []int{1, 2, 3},
+				Bar: 1,
+				Baz: 2,
+			},
+			format: "foo",
+			output: `{"foo":[1,2,3]}`,
+		},
+		{
+			src: struct {
 				Foo []struct {
 					Bar int `json:"bar"`
 					Baz int `json:"baz"`
@@ -291,6 +363,31 @@ func TestFormat(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestFormatAnonymous(t *testing.T) {
+	type Embedded struct {
+		Foo int `json:"foo"`
+	}
+	src := struct {
+		Embedded `json:"foo"`
+		Bar      int `json:"bar"`
+	}{
+		Embedded: Embedded{Foo: 1},
+		Bar:      2,
+	}
+	f := NewFormatter()
+	o, err := f.Format(src, []string{"foo.foo", "bar"})
+	if err != nil {
+		t.Error("Should not have returned", err)
+	}
+	buf, err := json.Marshal(o)
+	if err != nil {
+		t.Error("Should not have returned", err)
+	}
+	if string(buf) != `{"foo":{"foo":1},"bar":2}` {
+		t.Errorf("Returned '%s', expected '%s'", string(buf), `{"foo":1,"bar":2}`)
 	}
 }
 
