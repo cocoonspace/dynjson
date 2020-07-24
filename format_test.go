@@ -17,9 +17,32 @@ func TestFormat(t *testing.T) {
 		err    string
 	}{
 		{
-			src:    struct{ Foo int }{Foo: 1},
+			src:    struct{ Foo int }{},
 			format: "bar",
 			err:    "field 'bar' does not exist",
+		},
+		{
+			src: struct {
+				foo int
+			}{},
+			format: "foo",
+			err:    "field 'foo' does not exist",
+		},
+		{
+			src: struct {
+				Foo int `json:"foo"`
+			}{},
+			format: "foo.bar",
+			err:    "field 'foo.bar' does not exist",
+		},
+		{
+			src: struct {
+				Foo struct {
+					Bar int `json:"bar"`
+				} `json:"foo"`
+			}{},
+			format: "foo.baz",
+			err:    "field 'foo.baz' does not exist",
 		},
 		{
 			src:    struct{ Foo int }{Foo: 1},
@@ -65,6 +88,15 @@ func TestFormat(t *testing.T) {
 				Foo int    `json:"foo"`
 				Bar string `json:"bar"`
 			}{Foo: 1, Bar: "bar"},
+			format: "foo",
+			output: `{"foo":1}`,
+		},
+		{
+			src: struct {
+				Foo int    `json:"foo"`
+				Bar string `json:"bar"`
+				Baz int    `json:"-"`
+			}{Foo: 1, Bar: "bar", Baz: 2},
 			format: "foo",
 			output: `{"foo":1}`,
 		},
@@ -345,7 +377,7 @@ func TestFormat(t *testing.T) {
 			o, err := f.Format(tt.src, fields)
 			if tt.err != "" {
 				if err == nil {
-					t.Fail()
+					t.FailNow()
 				}
 				if tt.err != err.Error() {
 					t.Errorf("Returned error '%v', expected '%s'", err, tt.err)

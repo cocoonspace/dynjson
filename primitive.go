@@ -1,6 +1,9 @@
 package dynjson
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 type primitiveFormatter struct {
 	t reflect.Type
@@ -18,7 +21,10 @@ type primitiveBuilder struct {
 	t reflect.Type
 }
 
-func (b *primitiveBuilder) build(fields []string) (formatter, error) {
+func (b *primitiveBuilder) build(fields []string, prefix string) (formatter, error) {
+	if len(fields) > 0 {
+		return nil, fmt.Errorf("field '%s' does not exist", prefix+fields[0])
+	}
 	return &primitiveFormatter{t: b.t}, nil
 }
 

@@ -5,7 +5,7 @@ import (
 )
 
 type builder interface {
-	build(fields []string) (formatter, error)
+	build(fields []string, prefix string) (formatter, error)
 }
 
 func makeBuilder(t reflect.Type) (builder, error) {
