@@ -6,10 +6,13 @@ import (
 	"strings"
 )
 
+// Option defines a FieldsFromRequest option.
 type Option int
 
 const (
+	// OptionMultipleFields expects multiple select query parameters.
 	OptionMultipleFields Option = iota
+	// OptionCommaList expects a single select parameter with comma separated values.
 	OptionCommaList
 )
 
