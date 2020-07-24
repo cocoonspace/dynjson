@@ -7,6 +7,16 @@ import (
 
 func TestFieldsFromRequest(t *testing.T) {
 	{
+		r, err := http.NewRequest(http.MethodGet, "http://api.example.com/endpoint", nil)
+		if err != nil {
+			t.Error("Should not have returned", err)
+		}
+		fields := FieldsFromRequest(r)
+		if len(fields) != 0 {
+			t.Error("0 fields were expected")
+		}
+	}
+	{
 		r, err := http.NewRequest(http.MethodGet, "http://api.example.com/endpoint?select=foo&select=bar", nil)
 		if err != nil {
 			t.Error("Should not have returned", err)
@@ -45,5 +55,14 @@ func TestFieldsFromRequest(t *testing.T) {
 			t.Errorf("Expected [foo bar] but got %v", fields)
 		}
 	}
-
+	{
+		r, err := http.NewRequest(http.MethodGet, "http://api.example.com/endpoint?select=ad%f", nil)
+		if err != nil {
+			t.Error("Should not have returned", err)
+		}
+		fields := FieldsFromRequest(r)
+		if len(fields) != 0 {
+			t.Error("0 fields were expected")
+		}
+	}
 }

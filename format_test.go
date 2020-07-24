@@ -45,6 +45,15 @@ func TestFormat(t *testing.T) {
 			err:    "field 'foo.baz' does not exist",
 		},
 		{
+			src: struct {
+				Foo struct {
+					Bar int `json:"bar"`
+				} `json:"foo"`
+			}{},
+			format: "foo..baz",
+			err:    "field 'foo.' does not exist",
+		},
+		{
 			src:    struct{ Foo int }{Foo: 1},
 			format: "",
 			output: `{"Foo":1}`,
@@ -141,6 +150,29 @@ func TestFormat(t *testing.T) {
 			},
 			format: "",
 			output: `{"foo":{"bar":1,"baz":"baz"}}`,
+		},
+		{
+			src: struct {
+				Foo struct {
+					Bar struct {
+						Baz string `json:"baz"`
+					} `json:"bar"`
+				} `json:"foo"`
+			}{
+				Foo: struct {
+					Bar struct {
+						Baz string `json:"baz"`
+					} `json:"bar"`
+				}{
+					Bar: struct {
+						Baz string `json:"baz"`
+					}{
+						Baz: "baz",
+					},
+				},
+			},
+			format: "foo.bar.baz",
+			output: `{"foo":{"bar":{"baz":"baz"}}}`,
 		},
 		{
 			src: struct {
