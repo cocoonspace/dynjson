@@ -1,6 +1,9 @@
 # dynjson
 Client-customizable JSON formats for dynamic APIs.
 
+[![Build Status](https://travis-ci.org/cocoonspace/dynjson.svg?branch=master)](https://travis-ci.org/cocoonspace/dynjson)
+[![Coverage Status](https://coveralls.io/repos/github/cocoonspace/dynjson/badge.svg?branch=master)](https://coveralls.io/github/cocoonspace/dynjson?branch=master)
+
 ## Introduction
 
 dynjson allow APIs to return only fields selected by the API client :
