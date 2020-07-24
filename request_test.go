@@ -8,16 +8,44 @@ import (
 )
 
 func TestFieldsFromRequest(t *testing.T) {
-	r, err := http.NewRequest(http.MethodGet, "http://api.example.com/endpoint?select=foo&select=bar", nil)
-	if err != nil {
-		t.Error("Should not have returned", err)
+	{
+		r, err := http.NewRequest(http.MethodGet, "http://api.example.com/endpoint?select=foo&select=bar", nil)
+		if err != nil {
+			t.Error("Should not have returned", err)
+		}
+		fields := dynjson.FieldsFromRequest(r)
+		if len(fields) != 2 {
+			t.Error("2 fields were expected")
+		}
+		if fields[0] != "foo" || fields[1] != "bar" {
+			t.Errorf("Expected [foo bar] but got %v", fields)
+		}
 	}
-	fields := dynjson.FieldsFromRequest(r)
-	if len(fields) != 2 {
-		t.Error("2 fields were expected")
+	{
+		r, err := http.NewRequest(http.MethodGet, "http://api.example.com/endpoint?select=foo&select=bar", nil)
+		if err != nil {
+			t.Error("Should not have returned", err)
+		}
+		fields := dynjson.FieldsFromRequest(r, dynjson.OptionMultipleFields)
+		if len(fields) != 2 {
+			t.Error("2 fields were expected")
+		}
+		if fields[0] != "foo" || fields[1] != "bar" {
+			t.Errorf("Expected [foo bar] but got %v", fields)
+		}
 	}
-	if fields[0] != "foo" || fields[1] != "bar" {
-		t.Errorf("Expected [foo bar] but got %v", fields)
+	{
+		r, err := http.NewRequest(http.MethodGet, "http://api.example.com/endpoint?select=foo,bar", nil)
+		if err != nil {
+			t.Error("Should not have returned", err)
+		}
+		fields := dynjson.FieldsFromRequest(r, dynjson.OptionCommaList)
+		if len(fields) != 2 {
+			t.Error("2 fields were expected")
+		}
+		if fields[0] != "foo" || fields[1] != "bar" {
+			t.Errorf("Expected [foo bar] but got %v", fields)
+		}
 	}
 
 }
