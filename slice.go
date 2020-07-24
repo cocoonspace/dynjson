@@ -28,8 +28,8 @@ type sliceBuilder struct {
 	elem *structBuilder
 }
 
-func (b *sliceBuilder) build(fields []string) (formatter, error) {
-	et, err := b.elem.build(fields)
+func (b *sliceBuilder) build(fields []string, prefix string) (formatter, error) {
+	et, err := b.elem.build(fields, prefix)
 	if err != nil {
 		return nil, err
 	}

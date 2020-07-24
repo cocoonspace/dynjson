@@ -49,7 +49,7 @@ func (f *Formatter) Format(o interface{}, fields []string) (interface{}, error) 
 	ff := f.formatters[t][key]
 	if ff == nil {
 		var err error
-		ff, err = b.build(fields)
+		ff, err = b.build(fields, "")
 		if err != nil {
 			return nil, err
 		}

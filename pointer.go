@@ -28,8 +28,8 @@ type pointerBuilder struct {
 	elem *structBuilder
 }
 
-func (b *pointerBuilder) build(fields []string) (formatter, error) {
-	ef, err := b.elem.build(fields)
+func (b *pointerBuilder) build(fields []string, prefix string) (formatter, error) {
+	ef, err := b.elem.build(fields, prefix)
 	if err != nil {
 		return nil, err
 	}

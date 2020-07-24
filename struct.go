@@ -42,7 +42,7 @@ type structBuilder struct {
 	fields   map[string]reflect.StructField
 }
 
-func (b *structBuilder) build(fields []string) (formatter, error) {
+func (b *structBuilder) build(fields []string, prefix string) (formatter, error) {
 	if len(fields) == 0 {
 		return &primitiveFormatter{t: b.t}, nil
 	}
@@ -66,9 +66,9 @@ func (b *structBuilder) build(fields []string) (formatter, error) {
 		}
 		subb := b.builders[field]
 		if subb == nil {
-			return nil, fmt.Errorf("field '%s' does not exist", field)
+			return nil, fmt.Errorf("field '%s' does not exist", prefix+field)
 		}
-		fmter, err := subb.build(subfields)
+		fmter, err := subb.build(subfields, prefix+field+".")
 		if err != nil {
 			return nil, err
 		}
@@ -90,9 +90,6 @@ func (b *structBuilder) build(fields []string) (formatter, error) {
 }
 
 func makeStructBuilder(t reflect.Type) (*structBuilder, error) {
-	if t.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("%s is not a struct", t.Name())
-	}
 	sb := structBuilder{
 		t:        t,
 		builders: map[string]builder{},
