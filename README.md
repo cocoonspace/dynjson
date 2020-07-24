@@ -1,8 +1,7 @@
-# dynjson
+# dynjson [![](https://godoc.org/github.com/cocoonspace/dynjson?status.svg)](https://godoc.org/github.com/cocoonspace/dynjson) [![Build Status](https://travis-ci.org/cocoonspace/dynjson.svg?branch=master)](https://travis-ci.org/cocoonspace/dynjson) [![Coverage Status](https://coveralls.io/repos/github/cocoonspace/dynjson/badge.svg?branch=master)](https://coveralls.io/github/cocoonspace/dynjson?branch=master)
+
 Client-customizable JSON formats for dynamic APIs.
 
-[![Build Status](https://travis-ci.org/cocoonspace/dynjson.svg?branch=master)](https://travis-ci.org/cocoonspace/dynjson)
-[![Coverage Status](https://coveralls.io/repos/github/cocoonspace/dynjson/badge.svg?branch=master)](https://coveralls.io/github/cocoonspace/dynjson?branch=master)
 
 ## Introduction
 
@@ -21,7 +20,7 @@ GET https://api.example.com/v1/foos/1?select=foo
 
 ## Installation
 
-go get github.com/cocoon-space/dynjson
+go get github.com/cocoonspace/dynjson
 
 ## Usage
 
