@@ -78,3 +78,17 @@ if err != nil {
 err := json.Marshal(w, o) // {"foo": 1, "bar":[{"barfoo": 1}]}
 ```
 
+# Performance impact
+
+```
+BenchmarkFormat_Fields
+BenchmarkFormat_Fields-8     	 2466639	       480 ns/op	     184 B/op	       7 allocs/op
+BenchmarkFormat_NoFields
+BenchmarkFormat_NoFields-8   	 5255031	       232 ns/op	      32 B/op	       1 allocs/op
+BenchmarkRawJSON
+BenchmarkRawJSON-8           	 5351313	       223 ns/op	      32 B/op	       1 allocs/op
+```
+
+# License
+
+MIT - See LICENSE
