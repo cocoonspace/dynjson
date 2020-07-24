@@ -18,6 +18,9 @@ GET https://api.example.com/v1/foos/1?select=foo
 {"foo":1}
 ```
 
+dynjson mimicks the original struct using the original types and json tags.
+The field order is the same as the select parameters.
+
 ## Installation
 
 go get github.com/cocoonspace/dynjson
