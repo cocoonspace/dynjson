@@ -1,4 +1,4 @@
-// package dynjson allow APIs to return only fields selected by the API client:
+// Package dynjson allow APIs to return only fields selected by the API client:
 //
 // 	GET https://api.example.com/v1/foos
 // 	[{"id":1,foo":1,"bar":2,"baz":3}]
