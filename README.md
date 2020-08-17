@@ -4,7 +4,7 @@ Client-customizable JSON formats for dynamic APIs.
 
 ## Introduction
 
-dynjson allow APIs to return only fields selected by the API client :
+dynjson allow APIs to return only fields selected by the API client:
 
 ```
 GET https://api.example.com/v1/foos
@@ -39,10 +39,10 @@ o, err := f.Format(res, dynjson.FieldsFromRequest(r))
 if err != nil {
     // handle error
 }
-err := json.Marshal(w, o) // {"foo": 1}
+err = json.NewEncoder(w).Encode(o) // {"foo": 1}
 ```
 
-With struct fields :
+With struct fields:
 
 
 ```go
@@ -63,7 +63,7 @@ o, err := f.Format(res, []string{"foo", "bar.barfoo"})
 if err != nil {
     // handle error
 }
-err := json.Marshal(w, o) // {"foo": 1, "bar":{"barfoo": 1}}
+err = json.NewEncoder(w).Encode(o) // {"foo": 1, "bar":{"barfoo": 1}}
 ```
 
 With slices:
@@ -81,7 +81,7 @@ o, err := f.Format(res, []string{"foo"})
 if err != nil {
     // handle error
 }
-err := json.Marshal(w, o) // [{"foo": 1}]
+err = json.NewEncoder(w).Encode(o) // [{"foo": 1}]
 ```
 
 
@@ -103,7 +103,7 @@ o, err := f.Format(res, []string{"foo", "bar.barfoo"})
 if err != nil {
     // handle error
 }
-err := json.Marshal(w, o) // {"foo": 1, "bar":[{"barfoo": 1}]}
+err = json.NewEncoder(w).Encode(o) // {"foo": 1, "bar":[{"barfoo": 1}]}
 ```
 
 ## Limitations
@@ -124,7 +124,7 @@ BenchmarkRawJSON-8           	 5351313	       223 ns/op	      32 B/op	       1 a
 
 ## Contribution guidelines
 
-Contributions are welcome, as long as :
+Contributions are welcome, as long as:
 * unit tests & comments are included,
 * no external package is used.
 

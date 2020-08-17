@@ -16,9 +16,11 @@ const (
 	OptionCommaList
 )
 
-// FieldsFromRequest returns the list of fields requested from a http.Request
+// FieldsFromRequest returns the list of fields requested from a http.Request.
+//
 // Without opt or with OptionMultipleFields, the expected format is:
 // http://api.example.com/endpoint?select=foo&select=bar
+//
 // With OptionCommaList, the expected format is:
 // http://api.example.com/endpoint?select=foo,bar
 func FieldsFromRequest(r *http.Request, opt ...Option) []string {

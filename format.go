@@ -26,7 +26,7 @@ func NewFormatter() *Formatter {
 	}
 }
 
-// Format formats either an object or a slice, returning only the selected fields (or all if none specified).
+// Format formats either a struct or a slice, returning only the selected fields (or all if none specified).
 func (f *Formatter) Format(o interface{}, fields []string) (interface{}, error) {
 	if len(fields) == 0 {
 		return o, nil
