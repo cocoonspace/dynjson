@@ -455,6 +455,26 @@ func TestFormatAnonymous(t *testing.T) {
 	}
 }
 
+func TestFormatRecursion(t *testing.T) {
+	type Recursive struct {
+		Foo *Recursive `json:"foo"`
+		Bar int        `json:"bar"`
+	}
+	src := Recursive{Bar: 1}
+	f := NewFormatter()
+	o, err := f.Format(src, []string{"bar"})
+	if err != nil {
+		t.Error("Should not have returned", err)
+	}
+	buf, err := json.Marshal(o)
+	if err != nil {
+		t.Error("Should not have returned", err)
+	}
+	if string(buf) != `{"bar":1}` {
+		t.Errorf("Returned '%s', expected '%s'", string(buf), `{"bar":1}`)
+	}
+}
+
 func BenchmarkFormat_Fields(b *testing.B) {
 	f := NewFormatter()
 	w := json.NewEncoder(ioutil.Discard)
