@@ -98,6 +98,9 @@ func makeStructBuilder(t reflect.Type) (*structBuilder, error) {
 	}
 	for i := 0; i < t.NumField(); i++ {
 		fld := t.Field(i)
+		if fld.Type.Kind() == reflect.Ptr && fld.Type.Elem() == t {
+			continue
+		}
 		tag := fld.Tag.Get("json")
 		if tag == "-" || fld.PkgPath != "" {
 			continue
