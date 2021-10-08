@@ -475,6 +475,22 @@ func TestFormatRecursion(t *testing.T) {
 	}
 }
 
+func TestMultipleFields(t *testing.T) {
+	src := struct {
+		Foo int    `json:"foo"`
+		Bar string `json:"bar"`
+	}{Foo: 1, Bar: "bar"}
+	f := NewFormatter()
+	_, err := f.Format(src, []string{"foo", "foo"})
+	if err == nil {
+		t.Error("Expected error but returned nil")
+	}
+	msg := "duplicate fields detected: foo"
+	if err.Error() != msg {
+		t.Errorf("Returned '%s', expected '%s'", err.Error(), msg)
+	}
+}
+
 func BenchmarkFormat_Fields(b *testing.B) {
 	f := NewFormatter()
 	w := json.NewEncoder(ioutil.Discard)
