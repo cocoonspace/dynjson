@@ -1,3 +1,3 @@
-module pkgs/dynjson
+module github.com/cocoonspace/dynjson
 
-go 1.17
+go 1.16
