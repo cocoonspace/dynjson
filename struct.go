@@ -46,6 +46,10 @@ func (b *structBuilder) build(fields []string, prefix string) (formatter, error)
 	if len(fields) == 0 {
 		return &primitiveFormatter{t: b.t}, nil
 	}
+	err := detectDuplicateFields(fields)
+	if err != nil {
+		return nil, err
+	}
 	var lf []reflect.StructField
 	mappings := map[string]mapping{}
 	for _, field := range fields {
@@ -121,4 +125,22 @@ func makeStructBuilder(t reflect.Type) (*structBuilder, error) {
 		sb.fields[field] = fld
 	}
 	return &sb, nil
+}
+
+// detectDuplicateFields returns an error if passed the same field more than once.
+func detectDuplicateFields(fields []string) error {
+	h := make(map[string]int)
+	for _, f := range fields {
+		h[f]++
+	}
+	var e []string
+	for f, count := range h {
+		if count > 1 {
+			e = append(e, f)
+		}
+	}
+	if len(e) > 0 {
+		return fmt.Errorf("duplicate fields detected: %s", strings.Join(e, ", "))
+	}
+	return nil
 }
