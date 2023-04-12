@@ -368,6 +368,19 @@ func TestFormat(t *testing.T) {
 			output: `[{"foo":1}]`,
 		},
 		{
+			src: &[]struct {
+				Foo int `json:"foo"`
+				Bar int `json:"bar"`
+			}{
+				{
+					Foo: 1,
+					Bar: 2,
+				},
+			},
+			format: "foo",
+			output: `[{"foo":1}]`,
+		},
+		{
 			src: struct {
 				Foo []int `json:"foo"`
 				Bar int   `json:"bar"`
@@ -400,7 +413,7 @@ func TestFormat(t *testing.T) {
 		},
 	}
 	for i, tt := range tests {
-		t.Run(fmt.Sprintf("test #%d", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("test #%d %s %s", i, tt.format, tt.output), func(t *testing.T) {
 			f := NewFormatter()
 			var fields []string
 			if tt.format != "" {

@@ -13,7 +13,8 @@ func makeBuilder(t reflect.Type) (builder, error) {
 	case reflect.Struct:
 		return makeStructBuilder(t)
 	case reflect.Ptr:
-		if t.Elem().Kind() != reflect.Struct {
+		if t.Elem().Kind() != reflect.Struct &&
+			t.Elem().Kind() != reflect.Slice {
 			return makePrimitiveBuilder(t)
 		}
 		return makePointerBuilder(t)

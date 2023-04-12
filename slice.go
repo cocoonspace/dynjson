@@ -20,7 +20,9 @@ func (f *sliceFormatter) format(src reflect.Value) (reflect.Value, error) {
 		}
 		dst.Index(i).Set(dv)
 	}
-	return dst, nil
+	dstAddr := reflect.New(f.t).Elem()
+	dstAddr.Set(dst)
+	return dstAddr, nil
 }
 
 type sliceBuilder struct {
