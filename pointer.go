@@ -1,6 +1,7 @@
 package dynjson
 
 import (
+	"errors"
 	"reflect"
 )
 
@@ -25,7 +26,7 @@ func (f *pointerFormatter) format(src reflect.Value) (reflect.Value, error) {
 
 type pointerBuilder struct {
 	t    reflect.Type
-	elem *structBuilder
+	elem builder
 }
 
 func (b *pointerBuilder) build(fields []string, prefix string) (formatter, error) {
@@ -37,7 +38,16 @@ func (b *pointerBuilder) build(fields []string, prefix string) (formatter, error
 }
 
 func makePointerBuilder(t reflect.Type) (*pointerBuilder, error) {
-	eb, err := makeStructBuilder(t.Elem())
+	var eb builder
+	var err error
+	if t.Elem().Kind() == reflect.Struct {
+		eb, err = makeStructBuilder(t.Elem())
+	} else if t.Elem().Kind() == reflect.Slice {
+		eb, err = makeSliceBuilder(t.Elem())
+	} else {
+		return nil, errors.New("unable to handle this type")
+	}
+
 	if err != nil {
 		return nil, err
 	}
